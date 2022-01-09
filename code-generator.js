@@ -21,6 +21,7 @@
  *
  */
 
+const _ = require('lodash')
 const fs = require('fs')
 const path = require('path')
 const codegen = require('./codegen-utils')
@@ -70,7 +71,7 @@ class PythonCodeGenerator {
     var inherits = app.repository.getRelationshipsOf(elem, function (rel) {
       return (rel.source === elem && (rel instanceof type.UMLGeneralization || rel instanceof type.UMLInterfaceRealization))
     })
-    return inherits.map(function (gen) { return gen.target })
+    return _.map(inherits, function (gen) { return gen.target })
   }
 
   /**
@@ -109,7 +110,7 @@ class PythonCodeGenerator {
       } else {
         line = 'self.' + elem.name
       }
-      if (elem.multiplicity && ['0..*', '1..*', '*'].includes(elem.multiplicity.trim())) {
+      if (elem.multiplicity && _.includes(['0..*', '1..*', '*'], elem.multiplicity.trim())) {
         line += ' = []'
       } else if (elem.defaultValue && elem.defaultValue.length > 0) {
         line += ' = ' + elem.defaultValue
@@ -181,7 +182,7 @@ class PythonCodeGenerator {
 
       // params
       var params = elem.getNonReturnParameters()
-      var paramStr = params.map(function (p) { return p.name }).join(', ')
+      var paramStr = _.map(params, function (p) { return p.name }).join(', ')
 
       if (elem.isStatic) {
         codeWriter.writeLine('@classmethod')
@@ -242,7 +243,7 @@ class PythonCodeGenerator {
     // Import
     if (_inherits.length > 0) {
       _inherits.forEach(function (e) {
-        var _path = e.getPath(self.baseModel).map(function (item) { return ((options.lowerCase) ? item.name.toLowerCase() : item.name) }).join('.')
+        var _path = _.map(e.getPath(self.baseModel), function (item) { return item.name }).join('.')
         codeWriter.writeLine('from ' + _path + ' import ' + e.name)
       })
       codeWriter.writeLine()
@@ -254,7 +255,7 @@ class PythonCodeGenerator {
 
     // Inherits
     if (_inherits.length > 0) {
-      line += '(' + _inherits.map(function (e) { return e.name }).join(', ') + ')'
+      line += '(' + _.map(_inherits, function (e) { return e.name }).join(', ') + ')'
     }
 
     codeWriter.writeLine(line + ':')
@@ -289,7 +290,7 @@ class PythonCodeGenerator {
       }
     }
     codeWriter.outdent()
-    
+
   }
 
   /**
