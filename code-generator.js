@@ -35,7 +35,7 @@ class PythonCodeGenerator {
    * @param {type.UMLPackage} baseModel
    * @param {string} basePath generated files and directories to be placed
    */
-  constructor (baseModel, basePath) {
+  constructor(baseModel, basePath) {
     /** @member {type.Model} */
     this.baseModel = baseModel
 
@@ -48,7 +48,7 @@ class PythonCodeGenerator {
    * @param {Object} options
    * @return {string}
    */
-  getIndentString (options) {
+  getIndentString(options) {
     if (options.useTab) {
       return '\t'
     } else {
@@ -66,7 +66,7 @@ class PythonCodeGenerator {
    * @param {type.Model} elem
    * @return {Array.<type.Model>}
    */
-  getInherits (elem) {
+  getInherits(elem) {
     var inherits = app.repository.getRelationshipsOf(elem, function (rel) {
       return (rel.source === elem && (rel instanceof type.UMLGeneralization || rel instanceof type.UMLInterfaceRealization))
     })
@@ -79,7 +79,7 @@ class PythonCodeGenerator {
    * @param {string} text
    * @param {Object} options
    */
-  writeDoc (codeWriter, text, options) {
+  writeDoc(codeWriter, text, options) {
     var i, len, lines
     if (options.docString && text.trim().length > 0) {
       lines = text.trim().split('\n')
@@ -101,7 +101,7 @@ class PythonCodeGenerator {
    * @param {type.Model} elem
    * @param {Object} options
    */
-  writeVariable (codeWriter, elem, options, isClassVar) {
+  writeVariable(codeWriter, elem, options, isClassVar) {
     if (elem.name.length > 0) {
       var line
       if (isClassVar) {
@@ -126,7 +126,7 @@ class PythonCodeGenerator {
    * @param {type.Model} elem
    * @param {Object} options
    */
-  writeConstructor (codeWriter, elem, options) {
+  writeConstructor(codeWriter, elem, options) {
     var self = this
     var hasBody = false
     codeWriter.writeLine('def __init__(self):')
@@ -174,7 +174,7 @@ class PythonCodeGenerator {
    * @param {boolean} skipBody
    * @param {boolean} skipParams
    */
-  writeMethod (codeWriter, elem, options) {
+  writeMethod(codeWriter, elem, options) {
     if (elem.name.length > 0) {
       // name
       var line = 'def ' + elem.name
@@ -203,7 +203,7 @@ class PythonCodeGenerator {
    * @param {type.Model} elem
    * @param {Object} options
    */
-  writeEnum (codeWriter, elem, options) {
+  writeEnum(codeWriter, elem, options) {
     var line = ''
 
     codeWriter.writeLine('from enum import Enum')
@@ -234,7 +234,7 @@ class PythonCodeGenerator {
    * @param {type.Model} elem
    * @param {Object} options
    */
-  writeClass (codeWriter, elem, options) {
+  writeClass(codeWriter, elem, options) {
     var self = this
     var line = ''
     var _inherits = this.getInherits(elem)
@@ -289,7 +289,7 @@ class PythonCodeGenerator {
       }
     }
     codeWriter.outdent()
-    
+
   }
 
   /**
@@ -298,7 +298,7 @@ class PythonCodeGenerator {
    * @param {string} path
    * @param {Object} options
    */
-  generate (elem, basePath, options) {
+  generate(elem, basePath, options) {
     var result = new $.Deferred()
     var fullPath, codeWriter, file
 
@@ -314,7 +314,17 @@ class PythonCodeGenerator {
 
     // Class
     } else if (elem instanceof type.UMLClass || elem instanceof type.UMLInterface) {
-      fullPath = basePath + '/' + ((options.lowerCase) ? codegen.toCamelCase(elem.name.toLowerCase()) : codegen.toCamelCase(elem.name)) + '.py'
+      let file_name, first_letter
+      if (options.lowerCase) {
+        file_name = elem.name
+        first_letter = file_name[0]
+        file_name = file_name.replace(first_letter, first_letter.toLowerCase())
+        file_name = file_name.replace(/\.?([A-Z])/g, (x, y) => "_" + y.toLowerCase()).replace(/^_/, "");
+        console.log(file_name)
+      } else {
+        file_name = codegen.toCamelCase(elem.name)
+      }
+      fullPath = `${basePath}/${file_name}.py`
       codeWriter = new codegen.CodeWriter(this.getIndentString(options))
       codeWriter.writeLine(options.installPath)
       codeWriter.writeLine('# -*- coding: utf-8 -*-')
@@ -322,7 +332,7 @@ class PythonCodeGenerator {
       this.writeClass(codeWriter, elem, options)
       fs.writeFileSync(fullPath, codeWriter.getData())
 
-    // Enum
+      // Enum
     } else if (elem instanceof type.UMLEnumeration) {
       fullPath = basePath + '/' + ((options.lowerCase) ? elem.name.toLowerCase() : elem.name) + '.py'
       codeWriter = new codegen.CodeWriter(this.getIndentString(options))
@@ -332,7 +342,7 @@ class PythonCodeGenerator {
       this.writeEnum(codeWriter, elem, options)
       fs.writeFileSync(fullPath, codeWriter.getData())
 
-    // Others (Nothing generated.)
+      // Others (Nothing generated.)
     } else {
       result.resolve()
     }
@@ -346,11 +356,11 @@ class PythonCodeGenerator {
  * @param {string} basePath
  * @param {Object} options
  */
-function generate (baseModel, basePath, options) {
+function generate(baseModel, basePath, options) {
   var fullPath
   var pythonCodeGenerator = new PythonCodeGenerator(baseModel, basePath)
   fullPath = basePath + '/' + baseModel.name
-  fs.mkdirSync(fullPath)
+  fs.mkdirSync(fullPath, { recursive: true })
   baseModel.ownedElements.forEach(child => {
     pythonCodeGenerator.generate(child, fullPath, options)
   })

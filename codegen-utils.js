@@ -89,4 +89,4 @@ function toCamelCase(name){
    return index === 0 ? match.toLowerCase() : match.toUpperCase();
  });
 }
-export { toCamelCase };
+exports.toCamelCase = toCamelCase;
